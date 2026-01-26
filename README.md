@@ -1,5 +1,6 @@
 # Game Recommendation App Demo
 
+- Use the recommender: https://vid7-game-recommend-demo.onrender.com/
 - Created a **content-based game recommender system** which provides interactive recommendations based on game metadata, descriptions, developers, publishers, and tags.
 - This is a simple flask web app demo that lets users get game recommendations based on any game they enter.
 
