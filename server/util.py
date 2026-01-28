@@ -45,7 +45,7 @@ def get_game_data():
 
 def generate_and_make_recommendations(gameIndex: int):
     game_matching_list = list()
-    matching_games_dict_return = list()
+    matching_games_dicts = list()
     similarity_martix_for_game = None
 
     if 0 <= gameIndex < _final_game_matrix.shape[0]:
@@ -58,15 +58,24 @@ def generate_and_make_recommendations(gameIndex: int):
 
     for game in game_matching_list[:49]:
         k = str(game[0]) # matching game index
-        matching_games_dict_return.append({
+        matching_games_dicts.append({
             'indexid': k,
             'name': _game_details[k]['name'],
             'appid': _game_details[k]['appid'],
             'thumbnail_img_url': _game_details[k]['thumbnail_img_url'],
+            'popularity': _game_details[k]['popularity'],
+            'rating': _game_details[k]['rating'],
             'tags': find_matching_tags(gameIndex, k)
         })
 
-    return matching_games_dict_return
+    ret_list_of_game_dict = list()
+    top_similar = matching_games_dicts[1:11]
+    top_similar.sort(key=lambda x: (-(0.75*x['rating'] + 0.25*x['popularity']), -x['popularity']))
+    mid_similar = matching_games_dicts[11:]
+    mid_similar.sort(key=lambda x: (-(0.7*x['popularity'] + 0.3*x['rating']), -x['rating']))
+    ret_list_of_game_dict = [matching_games_dicts[0]] + top_similar + mid_similar
+
+    return ret_list_of_game_dict
 
 def find_matching_tags(gameIdX: int, gameIdY: int):
     gameIdX = str(gameIdX)

@@ -1,3 +1,17 @@
+const themeSwitchBtn = document.querySelector("#theme-sw-btn");
+themeSwitchBtn.onclick = function() {
+    const domBodyObj = document.querySelector('body');
+    if(domBodyObj.classList.contains('light-theme')){
+        domBodyObj.classList.remove('light-theme');
+        domBodyObj.classList.add('dark-theme');
+    }
+    else if(domBodyObj.classList.contains('dark-theme')){
+        domBodyObj.classList.remove('dark-theme');
+        domBodyObj.classList.add('light-theme');
+    }
+}
+
+
 let gameIdToSearch = -1;
 const getRecsBtn = document.querySelector('#recs-btn');
 const dropInp = document.querySelector('.dropdown-input');
@@ -9,6 +23,8 @@ const recDisp = document.querySelector('.display-sect');
 const clearBtn = document.querySelector("#clear-btn");
 
 getRecsBtn.disabled = true;
+let gameDataList = [];
+
 async function getCoreGameInfo() {
     try{
         const response = await fetch('/fetch-games-data');
@@ -40,21 +56,10 @@ function setActiveDropSelected(items, index) {
     }
 }
 
-async function prepSearchFunc(gameData) {
-    clearBtn.style.visibility = 'hidden';
-    clearBtn.onclick = function(){
-        resetSearchInp();
-    }
-
-    // const gameNamesSet = new Set();
-    const gameDataList = [];
-    for(let k in gameData){
-        gameDataList.push([String(gameData[k][1]).trim(), gameData[k][0], k]);
-        // gameNamesSet.add(`${gameData[k][0]} | ${gameData[k][1]}`);
-    }
-    gameDataList.sort();
-    // Populate initially
-    gameDataList.forEach(item => {
+function createSearchDropLists(matchingGamesList){
+    // // Populate initially
+    for(let i=0; i<Math.min(200, matchingGamesList.length); i++){
+        const item = matchingGamesList[i];
         const divElem = document.createElement('div');
         const txtString = `${item[0]} | ${item[1]}`;
         divElem.className = 'dropdown-item';
@@ -66,19 +71,45 @@ async function prepSearchFunc(gameData) {
             dropList.style.display = 'none';
             clearBtn.style.visibility = 'visible';
             // getRecsBtn.innerText = 'Get Recommendations';
-            getRecsBtn.style.boxShadow = '0 4px 8px rgb(185, 216, 185)';
+            getRecsBtn.style.boxShadow = '0 2px 5px rgb(185, 216, 185)';
             getRecsBtn.disabled = false;
         };
         dropList.appendChild(divElem);
-    });
+    }
+}
 
-
-    // Open dropdown on click and turn editable
-    dropInp.addEventListener('click', () => {
-        dropList.style.display = 'block';
-        dropInp.removeAttribute('readonly');
-        dropInp.focus();
+function resetGameDropDown(){
+    activeIndex = -1;
+    clearBtn.style.visibility = 'hidden';
+    getRecsBtn.style.boxShadow = 'none';
+    getRecsBtn.disabled = true;
+    Array.from(dropList.children).forEach(elem => {
+        elem.remove();
     });
+}
+
+function resetSearchInp(){
+    resetGameDropDown();
+    dropList.style.display = 'none';
+    dropInp.value = '';
+    // dropInp.click();
+    dropInp.focus();
+}
+
+async function prepSearchFunc(gameData) {
+    clearBtn.style.visibility = 'hidden';
+    clearBtn.onclick = function(){
+        resetSearchInp();
+    }
+
+    // const gameNamesSet = new Set();
+    
+    for(let k in gameData){
+        gameDataList.push([String(gameData[k][1]).trim(), gameData[k][0], k]);
+        // gameNamesSet.add(`${gameData[k][0]} | ${gameData[k][1]}`);
+    }
+    gameDataList.sort();
+
     // let validElemsListToSelect = [];
     let focusOnInd = -1;
     // Filter as you type
@@ -86,14 +117,26 @@ async function prepSearchFunc(gameData) {
         // validElemsListToSelect = [];
         focusOnInd = 0;
         const val = dropInp.value.toLowerCase();
-        clearBtn.style.visibility = (val=='') ? 'hidden': 'visible';
-        Array.from(dropList.children).forEach(elem => {
-            elem.style.display = elem.textContent.toLowerCase().includes(val) ? "block" : "none";
-            // validElemsListToSelect.push(elem);
-        });
-        // getRecsBtn.innerText = 'Select a game';
-        getRecsBtn.style.boxShadow = '0 4px 8px rgb(231, 191, 191)';
-        getRecsBtn.disabled = true;
+        let matchingGameData = [];
+        resetGameDropDown();
+        if(val!=''){
+            clearBtn.style.visibility = 'visible';
+            dropList.style.display = 'block';
+            gameDataList.forEach((game)=>{
+                // console.log(game);
+                if(`${game[0].toLowerCase()} | ${game[1]}`.includes(val)){
+                    matchingGameData.push(game);
+                }
+            });
+            createSearchDropLists(matchingGameData);
+            // getRecsBtn.innerText = 'Select a game';
+            getRecsBtn.style.boxShadow = '0 2px 5px rgb(231, 191, 191)';
+            getRecsBtn.disabled = true;
+        }
+        else{
+            clearBtn.style.visibility = 'invisible';
+            dropList.style.display = 'none';
+        }
     });
 
     dropInp.addEventListener('keydown', (e) => {
@@ -134,7 +177,7 @@ async function prepSearchFunc(gameData) {
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.dropdown')) {
             dropList.style.display = 'none';
-            dropInp.setAttribute('readonly', true);
+
         }
     });
 }
@@ -175,6 +218,14 @@ function createTagUnit(tagObj) {
     return createEl('div', 'tag-unit', tagStr);
 }
 
+gameRateCssClassObject = {
+    5: 'bg-vhigh-rated',
+    4: 'bg-high-rated',
+    3: 'bg-mid-rated',
+    2: 'bg-low-rated',
+    1: 'bg-vlow-rated'
+}
+
 function createMainGameSearchedForCard(gameObj) {
     const card = createEl('div', 'searched-for-disp', null, {id: `card-${gameObj['indexid']}`});
     const cardSide = createEl('div', 'card-main-side');
@@ -188,7 +239,7 @@ function createMainGameSearchedForCard(gameObj) {
     const nameDiv = createEl('div', 'card-name-title-div');
     nameDiv.title = 'Go to steam page';
     const gameLink = createEl('a', 'card-link-heading', null, 
-        {href: `https://store.steampowered.com/app/${gameObj['appid']}/`, target: '_blank'});
+        {href: `https://store.steampowered.com/app/${gameObj['appid']}/`, target: '_blank', rel: 'noopener noreferrer'});
     const h2 = createEl('h2', 'card-name', gameObj['name']);
     const span = createEl('span', '', gameObj['appid']);
     h2.appendChild(document.createElement('br'));
@@ -197,8 +248,13 @@ function createMainGameSearchedForCard(gameObj) {
     nameDiv.appendChild(gameLink);
     mainTextDiv.appendChild(nameDiv);
     
-    const tagsDiv = createEl('div');
-    tagsDiv.appendChild(createEl('h4', '', 'Tags:'));
+    const tagsDiv = createEl('div', 'main-tag-cont-div');
+    // tagsDiv.appendChild(createEl('h4', '', `${gameObj['popularity']} ${gameObj['rating']} Tags:`));
+    // let userScore = gameObj['rating'] == -1 ? '-' : gameObj['rating'];
+    const ratingDiv = createEl('div', 'rating-div', '', {'title': 'General reception'});
+    ratingDiv.classList.add(gameRateCssClassObject[gameObj['rating']]);
+
+    tagsDiv.appendChild(ratingDiv);
     const tagsList = createEl('div', 'tags-list');
     gameObj['tags'].forEach(tag => tagsList.appendChild(createTagUnit(tag)));
     tagsDiv.appendChild(tagsList);
@@ -224,7 +280,7 @@ function createRecommendationGameCard(gameObj) {
     const nameDiv = createEl('div', 'card-name-title-div');
     nameDiv.title = 'Go to steam page';
     const gameLink = createEl('a', 'card-link-heading', null, 
-        {href: `https://store.steampowered.com/app/${gameObj['appid']}/`, target: '_blank'});
+        {href: `https://store.steampowered.com/app/${gameObj['appid']}/`, target: '_blank', rel: 'noopener noreferrer'});
     const h2 = createEl('h2', 'card-name', gameObj['name']);
     const span = createEl('span', '', gameObj['appid']);
     h2.appendChild(document.createElement('br'));
@@ -235,11 +291,18 @@ function createRecommendationGameCard(gameObj) {
 
     // Tags
     const cardLower = createEl('div', 'card-lower');
-    cardLower.appendChild(createEl('h4', '', 'Similar tags:'));
-    const tagsList = createEl('div', 'tags-list');
+    // cardLower.appendChild(createEl('h4', '', `${gameObj['popularity']} ${gameObj['rating']} Tags:`));
+    // let userScore = gameObj['rating'] == -1 ? '-' : gameObj['rating'];
+    const ratingDiv = createEl('div', 'rating-div', '', {'title': 'General reception'});
+    ratingDiv.classList.add(gameRateCssClassObject[gameObj['rating']]);
+
+    cardLower.appendChild(ratingDiv);
+    const tagsList = createEl('div', 'tags-list', '', {'title': 'Similar matching tags'});
     gameObj['tags'].forEach(tag => tagsList.appendChild(createTagUnit(tag)));
     cardLower.appendChild(tagsList);
     card.appendChild(cardLower);
+    
+    // card.classList.add(gameRateCssClassObject[gameObj['rating']]);
 
     return card;
 }
@@ -271,22 +334,6 @@ function fillRecommendationDisplay(gameData, recommendationData){
     // srchdGameCont.innerText = `Game recommendations for: ${recommendationList[0]['name']} | ${recommendationList[0]['appid']}`;
 }
 
-function resetSearchInp(){
-    activeIndex = -1;
-    dropInp.value = '';
-    clearBtn.style.visibility = 'hidden';
-    dropList.style.display = 'none'
-    getRecsBtn.style.boxShadow = 'none';
-    getRecsBtn.disabled = true;
-    Array.from(dropList.children).forEach(elem => {
-        elem.style.display = "block";
-        if(elem.classList.contains('activeSelecedDropDownElem')){
-            elem.classList.remove('activeSelecedDropDownElem');
-        }
-    });
-    dropInp.click();
-}
-
 async function wrapperMain() {
     const gameData = await getCoreGameInfo();
     // console.log(gameDataList);
@@ -296,7 +343,7 @@ async function wrapperMain() {
     getRecsBtn.addEventListener('click', async () =>{
         // console.log(gameIdToSearch);
         getRecsBtn.disabled = true;
-        getRecsBtn.style.boxShadow = '0 4px 8px rgb(243, 223, 255)';
+        getRecsBtn.style.boxShadow = '0 2px 5px rgb(243, 223, 255)';
         const recommendationData = await getGameRecommendations(gameIdToSearch);
         fillRecommendationDisplay(gameData, recommendationData);
     });

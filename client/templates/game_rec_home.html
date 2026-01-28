@@ -8,18 +8,32 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
 
-<body>
+<body class="">
+    <script>
+        (function() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.querySelector('body').classList.add(prefersDark ? 'dark-theme' : 'light-theme');
+        })();
+    </script>
     <div class="container">
-        <div class="search-bar">
-            <div class="dropdown">
-                <div class="input-wrapper">
-                    <input type="text" class="dropdown-input" placeholder="Select a game" readonly>
-                    <span id="clear-btn">X</span>
-                </div>
-                <div class="dropdown-list"></div>
+        <div class="top-nav">
+            <div class="nav-side">
+                <h1>Game Recommender</h1>
             </div>
-            <div>
-                <button id="recs-btn">Get Recommendations</button>
+            <div class="search-bar">
+                <div class="dropdown">
+                    <div class="input-wrapper">
+                        <input type="text" class="dropdown-input" placeholder="Select a game">
+                        <span id="clear-btn">X</span>
+                    </div>
+                    <div class="dropdown-list"></div>
+                </div>
+                <div>
+                    <button id="recs-btn">Get Recommendations</button>
+                </div>
+            </div>
+            <div class="nav-side">
+                <button id="theme-sw-btn">Switch Theme</button>
             </div>
         </div>
         <div class="searched-game-cont"></div>
