@@ -252,7 +252,10 @@ function createMainGameSearchedForCard(gameObj) {
     // tagsDiv.appendChild(createEl('h4', '', `${gameObj['popularity']} ${gameObj['rating']} Tags:`));
     // let userScore = gameObj['rating'] == -1 ? '-' : gameObj['rating'];
     const ratingDiv = createEl('div', 'rating-div', '', {'title': 'General reception'});
-    ratingDiv.classList.add(gameRateCssClassObject[gameObj['rating']]);
+    const reviewCls = gameRateCssClassObject[gameObj['rating']];
+    if(reviewCls){
+        ratingDiv.classList.add(reviewCls);
+    }
 
     tagsDiv.appendChild(ratingDiv);
     const tagsList = createEl('div', 'tags-list');
@@ -294,7 +297,11 @@ function createRecommendationGameCard(gameObj) {
     // cardLower.appendChild(createEl('h4', '', `${gameObj['popularity']} ${gameObj['rating']} Tags:`));
     // let userScore = gameObj['rating'] == -1 ? '-' : gameObj['rating'];
     const ratingDiv = createEl('div', 'rating-div', '', {'title': 'General reception'});
-    ratingDiv.classList.add(gameRateCssClassObject[gameObj['rating']]);
+    // ratingDiv.classList.add(gameRateCssClassObject[gameObj['rating']]);
+    const reviewCls = gameRateCssClassObject[gameObj['rating']];
+    if(reviewCls){
+        ratingDiv.classList.add(reviewCls);
+    }
 
     cardLower.appendChild(ratingDiv);
     const tagsList = createEl('div', 'tags-list', '', {'title': 'Similar matching tags'});
